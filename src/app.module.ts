@@ -12,13 +12,9 @@ import { NotificationsModule } from './notifications/notifications.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'db.htawzwkztxtssvsxrzdu.supabase.co', // Host de Supabase
-      port: 5432,                                   // Puerto PostgreSQL
-      username: 'postgres',                         // Usuario Supabase
-      password: 'k8kFeuEUNsxxENVm',            // Contraseña segura de Supabase
-      database: 'postgres',                         // Base de datos que creaste en Supabase
+      url: 'postgresql://postgres:k8kFeuEUNsxxENVm@db.htawzwkztxtssvsxrzdu.supabase.co:5432/postgres',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,                            // True solo en desarrollo
+      synchronize: true, // solo desarrollo, en producción poner false
       logging: false,
     }),
     RidesModule,
