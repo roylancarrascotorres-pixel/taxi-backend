@@ -23,11 +23,11 @@ import { NotificationsModule } from './notifications/notifications.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
+        host: 'db.htawzwkztxtssvsxrzdu.supabase.co',
+        port: '5432',
+        username: 'postgres',
+        password: 'k8kFeuEUNsxxENVm',
+        database: 'taxi-db',
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // true solo desarrollo, en prod usar false
         logging: false,
