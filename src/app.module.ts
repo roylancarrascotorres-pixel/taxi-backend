@@ -23,11 +23,11 @@ import { Vehicle } from './vehicles/vehicle.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASS || '97011107307',
-      database: process.env.DB_NAME || 'taxi_db',
+      host: 'db.htawzwkztxtssvsxrzdu.supabase.co', 
+      port: 5432
+      username: 'postgres'
+      password: k8kFeuEUNsxxENVm
+      database: 'taxi-db',
       entities: [User, Driver, Ride, Wallet, DailyReward, Vehicle],
       synchronize: false,
       logging: true,
