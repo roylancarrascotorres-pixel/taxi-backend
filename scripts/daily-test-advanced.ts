@@ -1,139 +1,98 @@
-import { RideRepo } from '../src/rides/ride.repository';
-import { DriverRepo, Driver } from '../src/drivers/driver.repository';
-import { WalletRepo } from '../src/wallet/wallet.repository';
-import { RewardConfigRepo } from '../src/rewards/reward-config.repository';
-import { RewardLogRepo } from '../src/rewards/reward-log.repository';
-import { PlatformEarningsRepo } from '../src/platform/platform-earnings.repository';
-import { SystemConfigRepo } from '../src/system/system-config.repository';
-import { NotificationService } from '../src/notifications/notification.service';
-import { RidesService } from '../src/rides/rides.service';
-import { calculateDistance } from '../src/utils/distance.util';
+import { RideRepo } from '../rides/ride.repository';
+import { DriverRepo, Driver } from '../drivers/driver.repository';
+import { WalletRepo } from '../wallet/wallet.repository';
+import { RewardConfigRepo, RewardConfig } from '../rewards/reward-config.repository';
+import { RewardLogRepo } from '../rewards/reward-log.repository';
+import { PlatformEarningsRepo } from '../platform/platform-earnings.repository';
+import { SystemConfigRepo } from '../system/system-config.repository';
+import { NotificationService } from '../notifications/notification.service';
+import { RidesService } from '../rides/rides.service';
 
-async function runAdvancedTest() {
+async function runTest() {
+  // 🔹 Inicializar repositorios
   const rideRepo = new RideRepo();
   const driverRepo = new DriverRepo();
-  const walletRepo = new WalletRepo();
+  const driverWallet = new WalletRepo();
   const rewardConfigRepo = new RewardConfigRepo();
   const rewardLogRepo = new RewardLogRepo();
-  const platformRepo = new PlatformEarningsRepo();
+  const platformEarningsRepo = new PlatformEarningsRepo();
   const systemConfigRepo = new SystemConfigRepo();
   const notificationService = new NotificationService();
 
+  // 🔹 Inicializar servicio de rides
   const ridesService = new RidesService(
     rideRepo,
     driverRepo,
-    walletRepo,
+    driverWallet,
     rewardConfigRepo,
     rewardLogRepo,
-    platformRepo,
+    platformEarningsRepo,
     systemConfigRepo,
     notificationService
   );
 
-  // ----------------------------
-  // Configuración inicial
-  systemConfigRepo['config'] = {
-    use_rating_rule: true,
-    commission_percentage: 15,
-    dynamic_pricing_enabled: true,
-    grace_wait_minutes: 5,
-  };
-
-  // ----------------------------
-  // Crear drivers
+  // 🔹 Crear drivers de prueba
   const drivers: Driver[] = [
-    { id: 'd1', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'AUTO_BASICO', rating: 5, totalTrips: 0, canReceiveRides: true, currentLat: 23.136, currentLng: -82.358 },
-    { id: 'd2', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'AUTO_CONFORT', rating: 5, totalTrips: 0, canReceiveRides: true, currentLat: 23.140, currentLng: -82.360 },
-    { id: 'd3', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'MOTO', rating: 5, totalTrips: 0, canReceiveRides: true, currentLat: 23.138, currentLng: -82.359 },
-    { id: 'd4', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'XL', rating: 5, totalTrips: 0, canReceiveRides: true, currentLat: 23.139, currentLng: -82.357 },
-    { id: 'd5', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'AUTO_BASICO', rating: 5, totalTrips: 0, canReceiveRides: true, currentLat: 23.137, currentLng: -82.356 },
-  ];
-  for (const d of drivers) await driverRepo.save(d);
-
-  // ----------------------------
-  // Configuración de recompensas
-  rewardConfigRepo['rewards'] = [
-    { required_trips: 2, reward_amount: 5, active: true },
-    { required_trips: 5, reward_amount: 15, active: true },
-    { required_trips: 10, reward_amount: 30, active: true },
+    { id: 'd1', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'car', rating: 5, totalTrips: 0, canReceiveRides: true },
+    { id: 'd2', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'car', rating: 5, totalTrips: 0, canReceiveRides: true },
+    { id: 'd3', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'car', rating: 5, totalTrips: 0, canReceiveRides: true },
+    { id: 'd4', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'car', rating: 5, totalTrips: 0, canReceiveRides: true },
+    { id: 'd5', isOnline: true, status: 'AVAILABLE', walletBalance: 0, vehicleType: 'car', rating: 5, totalTrips: 0, canReceiveRides: true },
   ];
 
-  // ----------------------------
-  // Crear clientes
-  const clients = [
-    { id: 'c1', wallet: 0 },
-    { id: 'c2', wallet: 0 },
-    { id: 'c3', wallet: 0 },
+  for (const d of drivers) {
+    await driverRepo.save(d);
+  }
+
+  // 🔹 Crear rides de prueba
+  const ridesData = [
+    { client: { id: 'c1' }, originLat: 10, originLng: 10, destLat: 15, destLng: 15, vehicleType: 'car', totalCost: 10, tip: 0 },
+    { client: { id: 'c2' }, originLat: 20, originLng: 20, destLat: 25, destLng: 25, vehicleType: 'car', totalCost: 20, tip: 0 },
+    { client: { id: 'c3' }, originLat: 30, originLng: 30, destLat: 35, destLng: 35, vehicleType: 'car', totalCost: 30, tip: 5 },
   ];
 
-  // ----------------------------
-  // Simular 200 rides
-  for (let i = 0; i < 200; i++) {
-    const client = clients[i % clients.length];
-    const vehicleTypes = ['AUTO_BASICO','AUTO_CONFORT','MOTO','XL'];
-    const vehicleType = vehicleTypes[i % vehicleTypes.length];
-
+  const rides = [];
+  for (const data of ridesData) {
     const ride = await ridesService.requestRide(
-      client,
-      23.135 + Math.random()*0.01,
-      -82.356 - Math.random()*0.01,
-      23.140,
-      -82.360,
-      vehicleType
+      data.client,
+      data.originLat,
+      data.originLng,
+      data.destLat,
+      data.destLng,
+      data.vehicleType
     );
+    ride.totalCost = data.totalCost;
+    ride.tip = data.tip;
+    await rideRepo.save(ride);
+    rides.push(ride);
+  }
 
-    // Matching
-    let availableDrivers = await driverRepo.findAvailable(vehicleType);
+  // 🔹 Simular completado de rides
+  for (const ride of rides) {
+    const availableDrivers = (await driverRepo.findAvailable(ride.vehicleType)).slice(0, 1);
     if (availableDrivers.length === 0) {
       console.log(`No hay drivers disponibles para ride ${ride.id}`);
       continue;
     }
-
-    // Ordenar por rating si el admin habilita
-    const useRating = systemConfigRepo['config'].use_rating_rule;
-    availableDrivers.sort((a,b) => {
-      if (useRating && b.rating !== a.rating) return b.rating - a.rating;
-      const distA = calculateDistance(ride.originLat, ride.originLng, a.currentLat!, a.currentLng!);
-      const distB = calculateDistance(ride.originLat, ride.originLng, b.currentLat!, b.currentLng!);
-      return distA - distB;
-    });
-
     const driver = availableDrivers[0];
 
     await ridesService.acceptRide(ride, driver);
     await ridesService.startRide(ride, driver);
+    await ridesService.completeRide(ride, 5, 5, ride.tip, true);
 
-    // Tarifa dinámica con espera
-    let baseCost = 10;
-    if (systemConfigRepo['config'].dynamic_pricing_enabled) {
-      const waitMinutes = Math.floor(Math.random()*10); // simula tiempo de espera
-      baseCost += Math.max(waitMinutes - systemConfigRepo['config'].grace_wait_minutes, 0) * 2;
-    }
-    ride.totalCost = baseCost;
-
-    // Propina aleatoria
-    const tip = Math.random() > 0.5 ? Math.floor(Math.random()*5) + 1 : 0;
-
-    await ridesService.completeRide(ride, 5, 5, tip, tip > 0);
-
-    // Cashback al cliente (10%)
-    const cashback = ride.totalCost * 0.1;
-    client.wallet += cashback;
-
-    console.log(`Ride ${ride.id} completado por driver ${driver.id}, tip $${tip}, cashback cliente $${cashback.toFixed(2)}`);
+    console.log(`Ride ${ride.id} completado por driver ${driver.id}, tip $${ride.tip}, cashback cliente $${ride.promotionPercent ?? 0}`);
   }
 
-  // ----------------------------
-  // Reporte final
-  console.log('\n=== REPORTES FINALES ===');
-  let totalPlatformEarnings = 0;
+  // 🔹 Reporte final
   for (const d of drivers) {
-    const balance = await walletRepo.getBalance(d.id);
-    totalPlatformEarnings += balance;
-    console.log(`Driver ${d.id}: Wallet $${balance.toFixed(2)}, rating ${d.rating}, totalTrips ${d.totalTrips}`);
+    console.log(`Driver ${d.id}: Wallet $${await driverWallet.getBalance(d.id)}, rating ${d.rating}, totalTrips ${d.totalTrips}`);
   }
-  for (const c of clients) console.log(`Cliente ${c.id}: Wallet $${c.wallet.toFixed(2)}`);
-  console.log(`\nGanancia total aproximada de la plataforma: $${totalPlatformEarnings.toFixed(2)}`);
+  for (const c of ['c1', 'c2', 'c3']) {
+    console.log(`Cliente ${c}: Wallet $${await driverWallet.getBalance(c)}`);
+  }
+
+  const totalEarnings = platformEarningsRepo['earnings'].reduce((acc, e) => acc + e.amount, 0);
+  console.log(`\nGanancia total aproximada de la plataforma: $${totalEarnings}`);
 }
 
-runAdvancedTest();
+runTest().catch(console.error);

@@ -1,9 +1,12 @@
+// src/notifications/notification.service.ts
 import { Injectable } from '@nestjs/common';
+import { Ride } from '../rides/ride.repository';
+import { Driver } from '../drivers/driver.repository';
 
 @Injectable()
 export class NotificationService {
-  async sendRideRequest(drivers: any[], ride: any) {
+  sendRideRequest(drivers: Driver[], ride: Ride) {
     const driverIds = drivers.map(d => d.id);
-    console.log(`Enviando ride ${ride.id} a conductores:`, driverIds.length ? driverIds : 'No hay drivers disponibles');
+    console.log(`Enviando ride ${ride.id} a conductores:`, driverIds);
   }
 }
