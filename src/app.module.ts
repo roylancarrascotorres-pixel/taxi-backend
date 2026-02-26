@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { RidesModule } from './rides/rides.module';
 import { DriversModule } from './drivers/drivers.module';
-import { WalletsModule } from './wallet/wallet.module';
+import { WalletsModule } from './wallet/wallets.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { PlatformModule } from './platform/platform.module';
 import { SystemModule } from './system/system.module';
