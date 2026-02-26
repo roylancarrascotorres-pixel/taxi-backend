@@ -1,45 +1,35 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-// Módulos
-import { UsersModule } from './users/users.module';
-import { DriversModule } from './drivers/drivers.module';
 import { RidesModule } from './rides/rides.module';
-import { WalletsModule } from './wallet/wallets.module';
+import { DriversModule } from './drivers/drivers.module';
+import { WalletsModule } from './wallet/wallet.module';
 import { RewardsModule } from './rewards/rewards.module';
-import { AdminModule } from './admin/admin.module';
-import { VehiclesModule } from './vehicles/vehicles.module';
-
-// Entidades
-import { User } from './users/user.entity';
-import { Driver } from './drivers/driver.entity';
-import { Ride } from './rides/ride.entity';
-import { Wallet } from './wallet/wallet.entity';
-import { DailyReward } from './rewards/daily-reward.entity';
-import { Vehicle } from './vehicles/vehicle.entity';
+import { PlatformModule } from './platform/platform.module';
+import { SystemModule } from './system/system.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'db.htawzwkztxtssvsxrzdu.supabase.co', 
-      port: 5432
-      username: 'postgres'
-      password: k8kFeuEUNsxxENVm
-      database: 'taxi-db',
-      entities: [User, Driver, Ride, Wallet, DailyReward, Vehicle],
-      synchronize: false,
-      logging: true,
+      host: 'db.htawzwkztxtssvsxrzdu.supabase.co',
+      port: 5432,
+      username: 'postgres',                // tu usuario de Supabase
+      password: 'k8kFeueUNsxxENVm',       // tu contraseña segura de Supabase
+      database: 'taxi-db',                // nombre de la base de datos
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,                  // TRUE solo para desarrollo, en producción es mejor false
+      logging: false,
     }),
-    TypeOrmModule.forFeature([User, Driver, Ride, Wallet, DailyReward, Vehicle]),
-    UsersModule,
-    DriversModule,
     RidesModule,
+    DriversModule,
     WalletsModule,
     RewardsModule,
-    AdminModule,
-VehiclesModule,
+    PlatformModule,
+    SystemModule,
+    NotificationsModule,
   ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
