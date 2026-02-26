@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { RidesModule } from './rides/rides.module';
 import { DriversModule } from './drivers/drivers.module';
-import { WalletsModule } from './wallet/wallets.module';
+import { WalletsModule } from './wallet/wallet.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { PlatformModule } from './platform/platform.module';
 import { SystemModule } from './system/system.module';
@@ -14,7 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
   imports: [
     // ConfigModule para leer .env
     ConfigModule.forRoot({
-      isGlobal: true, // disponible en toda la app
+      isGlobal: true,
     }),
 
     // TypeORM con variables de entorno
@@ -23,18 +23,18 @@ import { NotificationsModule } from './notifications/notifications.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: 'db.htawzwkztxtssvsxrzdu.supabase.co',
-        port: '5432',
-        username: 'postgres',
-        password: 'k8kFeuEUNsxxENVm',
-        database: 'taxi-db',
+        host: configService.get<string>('DB_HOST'),
+        port: Number(configService.get('DB_PORT')), // <-- convertir a number
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // true solo desarrollo, en prod usar false
+        synchronize: true,
         logging: false,
       }),
     }),
 
-    // Tus módulos
+    // Módulos de tu app
     RidesModule,
     DriversModule,
     WalletsModule,
