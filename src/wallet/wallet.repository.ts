@@ -15,11 +15,13 @@ export class WalletRepo {
   async credit(userId: string, amount: number) {
     const current = this.balances.get(userId) || 0;
     this.balances.set(userId, current + amount);
+    await this.logTransaction(userId, 'CREDIT', amount);
   }
 
   async debit(userId: string, amount: number) {
     const current = this.balances.get(userId) || 0;
     this.balances.set(userId, current - amount);
+    await this.logTransaction(userId, 'DEBIT', amount);
   }
 
   async getBalance(userId: string) {

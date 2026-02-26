@@ -1,31 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import { DriverRepo } from '../drivers/driver.repository';
 import { RideRepo, Ride } from './ride.repository';
-import { DriverRepo, Driver } from '../drivers/driver.repository';
 import { WalletRepo } from '../wallet/wallet.repository';
 import { RewardConfigRepo } from '../rewards/reward-config.repository';
 import { RewardLogRepo } from '../rewards/reward-log.repository';
 import { PlatformEarningsRepo } from '../platform/platform-earnings.repository';
 import { SystemConfigRepo } from '../system/system-config.repository';
 import { NotificationService } from '../notifications/notification.service';
-import { calculateDistance } from '../utils/distance.util';
 
 @Injectable()
 export class RidesService {
   constructor(
     private readonly rideRepo: RideRepo,
     private readonly driverRepo: DriverRepo,
-    private readonly walletRepo: WalletRepo,
+    private readonly driverWallet: WalletRepo,
     private readonly rewardConfigRepo: RewardConfigRepo,
     private readonly rewardLogRepo: RewardLogRepo,
-    private readonly platformRepo: PlatformEarningsRepo,
+    private readonly platformEarningsRepo: PlatformEarningsRepo,
     private readonly systemConfigRepo: SystemConfigRepo,
-    private readonly notificationService: NotificationService,
+    private readonly notificationService: NotificationService
   ) {}
 
-  // -------------------------------
-  // 1️⃣ Solicitud de viaje
-  async requestRide(client: any, originLat: number, originLng: number, destLat: number, destLng: number, vehicleType: string): Promise<Ride> {
-    const ride: Ride = {
+  async requestRide(client, originLat, originLng, destLat, destLng, vehicleType) {
+    const ride: Ride = await this.rideRepo.create({
       id: Date.now().toString(),
       client,
       originLat,
@@ -34,139 +31,97 @@ export class RidesService {
       destLng,
       vehicleType,
       status: 'REQUESTED',
-      totalCost: 0,
-    };
+      totalCost: 0
+    });
 
-    await this.rideRepo.create(ride);
-    await this.matchDrivers(ride);
+    await this.findDrivers(ride);
+    return ride;
+  }
+
+  async findDrivers(ride: Ride) {
+    const config = await this.systemConfigRepo.get();
+    const useRating = config.use_rating_rule;
+
+    let drivers = await this.driverRepo.findAvailable(ride.vehicleType);
+
+    drivers = drivers.map(d => ({
+      ...d,
+      distance: this.calculateDistance(
+        ride.originLat,
+        ride.originLng,
+        d.currentLat || 0,
+        d.currentLng || 0
+      )
+    }));
+
+    if (useRating) {
+      drivers.sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        return a.distance - b.distance;
+      });
+    } else {
+      drivers.sort((a, b) => a.distance - b.distance);
+    }
+
+    const top5 = drivers.slice(0, 5);
+    this.notificationService.sendRideRequest(top5, ride);
+  }
+
+  async acceptRide(ride: Ride, driver) {
+    ride.driver = driver;
+    ride.status = 'ACCEPTED';
+    await this.rideRepo.save(ride);
+    driver.canReceiveRides = false;
+    await this.driverRepo.save(driver);
+    return ride;
+  }
+
+  async startRide(ride: Ride, driver) {
+    ride.status = 'STARTED';
+    ride.startedAt = new Date();
+    await this.rideRepo.save(ride);
+    return ride;
+  }
+
+  async completeRide(ride: Ride, driverRating?, clientRating?, tip?, useWalletForTip?) {
+    const config = await this.systemConfigRepo.get();
+
+    const commission = ride.totalCost * (config.commission_percentage / 100);
+    const driverNet = ride.totalCost - commission;
+
+    await this.driverWallet.credit(ride.driver.id, driverNet);
+    await this.platformEarningsRepo.create({ rideId: ride.id, amount: commission, date: new Date() });
+
+    if (tip && useWalletForTip) {
+      await this.driverWallet.credit(ride.driver.id, tip);
+    }
+
+    ride.status = 'COMPLETED';
+    ride.completedAt = new Date();
+    await this.rideRepo.save(ride);
 
     return ride;
   }
 
-  // -------------------------------
-  // 2️⃣ Matching inteligente
-  async matchDrivers(ride: Ride) {
-    const config = await this.systemConfigRepo.get();
-    const useRating = config.use_rating_rule ?? false;
-
-    let drivers: Driver[] = await this.driverRepo.findAvailable(ride.vehicleType);
-
-    // Calcular distancia
-    drivers = drivers.map(d => ({
-      ...d,
-      distance: calculateDistance(ride.originLat, ride.originLng, d.currentLat ?? 0, d.currentLng ?? 0),
-    }));
-
-    // Ordenar por rating y distancia
-    drivers.sort((a, b) => {
-      if (useRating && (b.rating !== a.rating)) return (b.rating ?? 0) - (a.rating ?? 0);
-      return (a.distance ?? 0) - (b.distance ?? 0);
-    });
-
-    const top5 = drivers.slice(0, 5);
-
-    await this.notificationService.sendRideRequest(top5, ride);
+  async cancelRide(ride: Ride, userType) {
+    ride.status = 'CANCELLED';
+    await this.rideRepo.save(ride);
+    return ride;
   }
 
-  // -------------------------------
-  // 3️⃣ Aceptar viaje
-  async acceptRide(ride: Ride, driver: Driver): Promise<Ride> {
-    const dbRide = await this.rideRepo.findOne(ride.id);
-    if (!dbRide) throw new Error('Ride no encontrado');
-
-    dbRide.driver = driver;
-    dbRide.status = 'ACCEPTED';
-
-    // Bloquear conductor hasta que inicie viaje
-    driver.canReceiveRides = false;
-    await this.driverRepo.save(driver);
-
-    await this.rideRepo.save(dbRide);
-    return dbRide;
+  private calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(this.deg2rad(lat1)) *
+      Math.cos(this.deg2rad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  // -------------------------------
-  // 4️⃣ Iniciar viaje
-  async startRide(ride: Ride, driver: Driver): Promise<Ride> {
-    const dbRide = await this.rideRepo.findOne(ride.id);
-    if (!dbRide) throw new Error('Ride no encontrado');
-
-    dbRide.status = 'STARTED';
-    dbRide.startedAt = new Date();
-
-    await this.rideRepo.save(dbRide);
-    return dbRide;
-  }
-
-  // -------------------------------
-  // 5️⃣ Completar viaje
-  async completeRide(ride: Ride, driverRating?: number, clientRating?: number, tip?: number, useWalletForTip?: boolean): Promise<Ride> {
-    const dbRide = await this.rideRepo.findOne(ride.id);
-    if (!dbRide) throw new Error('Ride no encontrado');
-    if (!dbRide.driver) throw new Error('Ride sin conductor');
-
-    const config = await this.systemConfigRepo.get();
-    const commissionPercent = config.commission_percentage ?? 0;
-
-    dbRide.status = 'COMPLETED';
-    dbRide.completedAt = new Date();
-    dbRide.driverRating = driverRating;
-    dbRide.clientRating = clientRating;
-    dbRide.tip = tip;
-
-    const total = dbRide.totalCost;
-    const commission = total * (commissionPercent / 100);
-    const driverNet = total - commission;
-
-    // Creditar conductor
-    await this.walletRepo.credit(dbRide.driver.id, driverNet);
-    await this.walletRepo.logTransaction(dbRide.driver.id, 'RIDE_PAYMENT', driverNet);
-
-    // Comisión plataforma
-    await this.platformRepo.create({ rideId: dbRide.id, amount: commission, date: new Date() });
-
-    // Propina
-    if (tip && useWalletForTip) {
-      await this.walletRepo.credit(dbRide.driver.id, tip);
-      await this.walletRepo.logTransaction(dbRide.driver.id, 'TIP', tip);
-    }
-
-    // Recompensas
-    await this.checkDailyReward(dbRide.driver.id);
-
-    // Bloqueo si wallet < 0
-    if ((dbRide.driver.walletBalance ?? 0) < 0) dbRide.driver.canReceiveRides = false;
-
-    await this.rideRepo.save(dbRide);
-    await this.driverRepo.save(dbRide.driver);
-
-    return dbRide;
-  }
-
-  // -------------------------------
-  // 6️⃣ Cancelar viaje
-  async cancelRide(ride: Ride, userType: string): Promise<Ride> {
-    const dbRide = await this.rideRepo.findOne(ride.id);
-    if (!dbRide) throw new Error('Ride no encontrado');
-
-    dbRide.status = 'CANCELLED';
-    dbRide.cancelledAt = new Date();
-
-    await this.rideRepo.save(dbRide);
-    return dbRide;
-  }
-
-  // -------------------------------
-  // 7️⃣ Recompensas diarias
-  private async checkDailyReward(driverId: string) {
-    const trips = await this.rideRepo.countCompletedTodayByDriver(driverId);
-    const rewards = await this.rewardConfigRepo.findActive();
-
-    for (const reward of rewards) {
-      if (trips === reward.required_trips) {
-        await this.walletRepo.credit(driverId, reward.reward_amount);
-        await this.rewardLogRepo.create({ driverId, amount: reward.reward_amount, date: new Date() });
-      }
-    }
+  private deg2rad(deg) {
+    return deg * (Math.PI / 180);
   }
 }

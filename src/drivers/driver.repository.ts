@@ -2,22 +2,15 @@ import { Injectable } from '@nestjs/common';
 
 export type Driver = {
   id: string;
-
   isOnline: boolean;
   status: 'AVAILABLE' | 'BUSY';
-
   walletBalance: number;
-
   vehicleType: string;
-
   rating: number;
   totalTrips: number;
-
   canReceiveRides: boolean;
-
   currentLat?: number;
   currentLng?: number;
-
   distance?: number;
 };
 
@@ -40,11 +33,8 @@ export class DriverRepo {
   }
 
   async save(driver: Driver) {
-    const index = this.drivers.findIndex(d => d.id === driver.id);
-    if (index >= 0) {
-      this.drivers[index] = driver;
-    } else {
-      this.drivers.push(driver);
-    }
+    const idx = this.drivers.findIndex(d => d.id === driver.id);
+    if (idx >= 0) this.drivers[idx] = driver;
+    else this.drivers.push(driver);
   }
 }

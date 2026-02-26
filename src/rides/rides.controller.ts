@@ -1,8 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { RidesService } from 'rides/rides.service';
-import { User } from 'users/user.entity';
-import { Driver } from 'drivers/driver.repository';
-import { Ride } from 'rides/ride.repository';
+import { RidesService } from './rides.service';
+import { User } from '../users/user.entity';
+import { Driver } from '../drivers/driver.repository';
+import { Ride } from './ride.repository';
 
 @Controller('rides')
 export class RidesController {
