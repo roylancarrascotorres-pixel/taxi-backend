@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { RidesModule } from './rides/rides.module';
 import { DriversModule } from './drivers/drivers.module';
 import { WalletsModule } from './wallet/wallets.module';
@@ -12,29 +10,17 @@ import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
-    // ConfigModule para leer .env
-    ConfigModule.forRoot({
-      isGlobal: true,
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'db.htawzwkztxtssvsxrzdu.supabase.co', // Host de Supabase
+      port: 5432,                                   // Puerto PostgreSQL
+      username: 'postgres',                         // Usuario Supabase
+      password: 'k8kFeuEUNsxxENVm',            // Contraseña segura de Supabase
+      database: 'postgres',                         // Base de datos que creaste en Supabase
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,                            // True solo en desarrollo
+      logging: false,
     }),
-
-    // TypeORM con variables de entorno
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: Number(configService.get('DB_PORT')), // <-- convertir a number
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-        logging: false,
-      }),
-    }),
-
-    // Módulos de tu app
     RidesModule,
     DriversModule,
     WalletsModule,
