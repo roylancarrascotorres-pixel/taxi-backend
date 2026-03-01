@@ -1,4 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+// src/rides/rides.service.ts
+import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
@@ -13,7 +14,6 @@ export class RidesService {
       .from('rides')
       .select('*')
       .order('created_at', { ascending: false });
-
     if (error) throw new Error(error.message);
     return data;
   }
@@ -24,7 +24,6 @@ export class RidesService {
       .insert([payload])
       .select()
       .single();
-
     if (error) throw new Error(error.message);
     return data;
   }
@@ -36,7 +35,6 @@ export class RidesService {
       .eq('id', id)
       .select()
       .single();
-
     if (error) throw new Error(error.message);
     return data;
   }
@@ -46,9 +44,7 @@ export class RidesService {
       .from('rides')
       .delete()
       .eq('id', id);
-
     if (error) throw new Error(error.message);
-
     return { message: 'Ride eliminado' };
   }
 }

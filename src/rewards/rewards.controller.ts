@@ -6,13 +6,11 @@ import { RewardsService } from './rewards.service';
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
-  // Historial de recompensas de un driver
   @Get('log/:driverId')
   async getLog(@Param('driverId') driverId: number) {
     return await this.rewardsService.getDriverRewards(driverId);
   }
 
-  // Recompensas del día
   @Get('today/:driverId')
   async getToday(@Param('driverId') driverId: number) {
     return await this.rewardsService.getTodaysRewards(driverId);
