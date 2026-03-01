@@ -1,3 +1,4 @@
+// src/rewards/rewards.controller.ts
 import { Controller, Get, Param } from '@nestjs/common';
 import { RewardsService } from './rewards.service';
 
@@ -5,15 +6,15 @@ import { RewardsService } from './rewards.service';
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
-  // Configuración de recompensas activas
-  @Get('config')
-  getConfig() {
-    return this.rewardsService.getConfig();
+  // Historial de recompensas de un driver
+  @Get('log/:driverId')
+  async getLog(@Param('driverId') driverId: number) {
+    return await this.rewardsService.getDriverRewards(driverId);
   }
 
-  // Historial de recompensas por chofer
-  @Get('log/:driverId')
-  getLog(@Param('driverId') driverId: string) {
-    return this.rewardsService.getLog(driverId);
+  // Recompensas del día
+  @Get('today/:driverId')
+  async getToday(@Param('driverId') driverId: number) {
+    return await this.rewardsService.getTodaysRewards(driverId);
   }
 }

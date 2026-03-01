@@ -1,25 +1,26 @@
+// src/wallet/wallet.controller.ts
 import { Controller, Get, Param, Post, Body } from '@nestjs/common';
-import { WalletService } from './wallet.service';
+import { WalletsService } from './wallets.service';
 
 @Controller('wallet')
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(private readonly walletsService: WalletsService) {}
 
-  // Obtener balance de cliente o chofer
-  @Get(':userId')
-  getBalance(@Param('userId') userId: string) {
-    return this.walletService.getBalance(userId);
+  // Obtener balance
+  @Get(':walletId')
+  async getBalance(@Param('walletId') walletId: number) {
+    return await this.walletsService.getBalance(walletId);
   }
 
   // Recargar wallet (solo admin)
   @Post('recharge')
-  rechargeWallet(@Body() body: { userId: string; amount: number }) {
-    return this.walletService.recharge(body.userId, body.amount);
+  async rechargeWallet(@Body() body: { walletId: number; amount: number }) {
+    return await this.walletsService.addBalance(body.walletId, body.amount);
   }
 
-  // Historial de transacciones
-  @Get('history/:userId')
-  getHistory(@Param('userId') userId: string) {
-    return this.walletService.getTransactionHistory(userId);
+  // Restar saldo (opcional, para gastos)
+  @Post('subtract')
+  async subtractWallet(@Body() body: { walletId: number; amount: number }) {
+    return await this.walletsService.subtractBalance(body.walletId, body.amount);
   }
 }

@@ -1,7 +1,8 @@
+// src/rewards/rewards.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RewardsService } from './rewards.service';
 import { RewardsController } from './rewards.controller';
+import { RewardsService } from './rewards.service';
 import { DailyReward } from './daily-reward.entity';
 import { Driver } from '../drivers/driver.entity';
 
