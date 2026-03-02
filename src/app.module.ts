@@ -23,11 +23,12 @@ import { Vehicle } from './vehicles/vehicle.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
+      host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASS || '97011107307',
-      database: process.env.DB_NAME || 'taxi_db',
+      username: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      database: process.env.DB_NAME,
+      ssl: { rejectUnauthorized: false }, // <--- Esto permite conectarse a Supabase desde Render
       entities: [User, Driver, Ride, Wallet, DailyReward, Vehicle],
       synchronize: false,
       logging: true,
@@ -39,7 +40,7 @@ import { Vehicle } from './vehicles/vehicle.entity';
     WalletsModule,
     RewardsModule,
     AdminModule,
-VehiclesModule,
+    VehiclesModule,
   ],
 })
 export class AppModule {}
