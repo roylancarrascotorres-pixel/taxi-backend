@@ -1,26 +1,31 @@
+// src/drivers/drivers.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Driver } from './driver.entity';
-import { Wallet } from '../wallet/wallet.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { WalletsService } from '../wallet/wallets.service';
 
 @Injectable()
 export class DriversService {
   constructor(
     @InjectRepository(Driver)
-    private driverRepo: Repository<Driver>,
-    @InjectRepository(Wallet)
-    private walletRepo: Repository<Wallet>,
+    private readonly driverRepo: Repository<Driver>,
+
+    private readonly walletsService: WalletsService, // ✅ inyectado desde WalletsModule
   ) {}
 
   async createDriver(name: string, phone: string, password: string): Promise<Driver> {
-    const wallet = this.walletRepo.create({ balance: 0 });
-    await this.walletRepo.save(wallet);
+    // Crear wallet usando WalletsService
+    const wallet = await this.walletsService.createWallet();
 
     const driver = this.driverRepo.create({
-      fullName: name,
+      name,
       phone,
       password,
+      available: true,
+      suspended: false,
+      rating: 5,
+      cancelationsToday: 0,
       wallet,
     });
 
@@ -31,9 +36,7 @@ export class DriversService {
     return this.driverRepo.find({ relations: ['wallet'] });
   }
 
-  async findById(id: number): Promise<Driver> {
-    const driver = await this.driverRepo.findOne({ where: { id }, relations: ['wallet'] });
-    if (!driver) throw new Error('Driver not found');
-    return driver;
+  async findById(id: number): Promise<Driver | null> {
+    return this.driverRepo.findOne({ where: { id }, relations: ['wallet'] });
   }
 }

@@ -1,27 +1,52 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
-import { RidesService } from './rides.service';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { RideService } from './rides.service';
+import { Driver } from '../drivers/driver.entity';
+import { Ride } from './ride.entity';
 
 @Controller('rides')
-export class RidesController {
-  constructor(private readonly ridesService: RidesService) {}
+export class RideController {
+  constructor(private readonly rideService: RideService) {}
 
-  @Get()
-  getAll() {
-    return this.ridesService.getAllRides();
+  // Solicitar viaje
+  @Post('request')
+  async requestRide(@Body() body: {
+    clientId: number,
+    pickupLat: number,
+    pickupLng: number,
+    dropLat: number,
+    dropLng: number,
+    vehicleTypeId: number,
+    drivers: Driver[]
+  }): Promise<Ride> {
+    return this.rideService.requestRide(
+      body.clientId,
+      body.pickupLat,
+      body.pickupLng,
+      body.dropLat,
+      body.dropLng,
+      body.vehicleTypeId,
+      body.drivers
+    );
   }
 
-  @Post()
-  create(@Body() body: any) {
-    return this.ridesService.createRide(body);
+  // Completar viaje
+  @Post(':rideId/complete')
+  async completeTrip(@Param('rideId') rideId: number, @Body('payWithWallet') payWithWallet: boolean) {
+    return this.rideService.completeTrip(rideId, payWithWallet);
   }
 
-  @Patch(':id/complete')
-  complete(@Param('id') id: string) {
-    return this.ridesService.completeRide(id);
+  // Cancelar viaje
+  @Post(':rideId/cancel')
+  async cancelRide(@Param('rideId') rideId: number, @Body() body: { cancelBy: 'client' | 'driver', penalty: number }) {
+    return this.rideService.cancelRide(rideId, body.cancelBy, body.penalty);
   }
 
-  @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.ridesService.deleteRide(id);
+  // Nuevo endpoint: chofer acepta viaje
+  @Post(':rideId/accept')
+  async acceptRide(
+    @Param('rideId') rideId: number,
+    @Body('driverId') driverId: number
+  ): Promise<Ride> {
+    return this.rideService.acceptRide(rideId, driverId);
   }
 }

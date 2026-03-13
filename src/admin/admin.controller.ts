@@ -1,46 +1,72 @@
 // src/admin/admin.controller.ts
-import { Controller, Post, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Controller, Post, Body, Param, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../common/enums/role.enum';
-
-import { User } from '../users/user.entity';
-import { Driver } from '../drivers/driver.entity';
-import { Wallet } from '../wallet/wallet.entity';
-import { Ride } from '../rides/ride.entity';
-import { DailyReward } from '../rewards/daily-reward.entity';
-import { Vehicle } from '../vehicles/vehicle.entity';
+import { WalletsService } from '../wallet/wallets.service';
+import { NotificationService } from '../notifications/notification.service';
+import { WalletTransactionType } from '../wallet/wallet-transaction.entity';
 
 @Controller('admin')
 @UseGuards(AuthGuard, RolesGuard)
 export class AdminController {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly walletsService: WalletsService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
-  // Endpoint para limpiar todas las tablas principales
-  @Post('clear-tables')
+  @Post('wallet/:walletId/recharge')
   @Roles(Role.ADMIN)
-  async clearTables() {
-    try {
-      const tables = [Ride, DailyReward, Vehicle, Wallet, Driver, User];
+  async rechargeWallet(@Param('walletId') walletId: number, @Body('amount') amount: number) {
+    return this.walletsService.rechargeWallet(walletId, amount);
+  }
 
-      // Limpiar cada tabla respetando dependencias
-      for (const table of tables) {
-        const repo = this.dataSource.getRepository(table);
-        if (repo.metadata) {
-          await repo.clear();
-          console.log(`✅ Tabla ${repo.metadata.tableName} limpiada`);
-        }
-      }
+  @Get('wallet/:walletId/balance')
+  @Roles(Role.ADMIN)
+  async getBalance(@Param('walletId') walletId: number) {
+    const balance = await this.walletsService.getBalance(walletId);
+    return { walletId, balance };
+  }
 
-      return { message: 'Todas las tablas fueron limpiadas correctamente' };
-    } catch (err) {
-      console.error('❌ Error limpiando tablas:', err);
-      throw new HttpException(
-        'Error al limpiar tablas',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
+  @Post('wallet/:walletId/reward')
+  @Roles(Role.ADMIN)
+  async applyReward(@Param('walletId') walletId: number, @Body('amount') amount: number) {
+    return this.walletsService.applyTransaction(
+      walletId,
+      amount,
+      WalletTransactionType.BONUS,
+      'manual_reward'
+    );
+  }
+
+  @Post('notify/user')
+  @Roles(Role.ADMIN)
+  async notifyUser(@Body() body: { userId: number; title: string; message: string }) {
+    await this.notificationService.sendToUser(body.userId, body.title, body.message);
+    return { message: `Notificación enviada al usuario ${body.userId}` };
+  }
+
+  @Post('notify/drivers')
+  @Roles(Role.ADMIN)
+  async notifyDrivers(@Body() body: { title: string; message: string }) {
+    await this.notificationService.sendToAllDrivers(body.title, body.message);
+    return { message: 'Notificación enviada a todos los choferes' };
+  }
+
+  @Post('notify/clients')
+  @Roles(Role.ADMIN)
+  async notifyClients(@Body() body: { title: string; message: string }) {
+    await this.notificationService.sendToAllClients(body.title, body.message);
+    return { message: 'Notificación enviada a todos los clientes' };
+  }
+
+  @Post('send-notification')
+  async sendNotification(@Body() body: any) {
+    return await this.notificationService.sendPush(
+      body.token,
+      body.title,
+      body.message
+    );
   }
 }

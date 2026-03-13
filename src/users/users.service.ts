@@ -1,39 +1,33 @@
+// src/users/users.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { Wallet } from '../wallet/wallet.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { WalletsService } from '../wallet/wallets.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepo: Repository<User>,
-    @InjectRepository(Wallet)
-    private walletRepo: Repository<Wallet>,
+
+    private walletsService: WalletsService, // ✅ ahora usamos WalletsService
   ) {}
 
   async createUser(name: string, phone: string, password: string): Promise<User> {
-    const wallet = this.walletRepo.create({ balance: 0 });
-    await this.walletRepo.save(wallet);
+    // Crear wallet usando WalletsService
+    const wallet = await this.walletsService.createWallet();
 
-    const user = this.usersRepo.create({
-      fullName: name,
-      phone,
-      password,
-      wallet,
-    });
-
+    // Crear usuario con wallet
+    const user = this.usersRepo.create({ name, phone, password, wallet });
     return this.usersRepo.save(user);
   }
 
-  async findAll(): Promise<User[]> {
+  findAll(): Promise<User[]> {
     return this.usersRepo.find({ relations: ['wallet'] });
   }
 
-  async findById(id: number): Promise<User> {
-    const user = await this.usersRepo.findOne({ where: { id }, relations: ['wallet'] });
-    if (!user) throw new Error('User not found');
-    return user;
+  findById(id: number): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { id }, relations: ['wallet'] });
   }
 }

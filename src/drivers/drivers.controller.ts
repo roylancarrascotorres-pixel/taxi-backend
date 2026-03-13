@@ -1,24 +1,36 @@
+// src/drivers/drivers.controller.ts
 import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { DriversService } from './drivers.service';
-import { Repository } from 'typeorm';
-import { UpdateDriverDto } from './dto/update-driver.dto'; // El DTO para la actualización
+import { WalletsService } from '../wallet/wallets.service';
 
 @Controller('drivers')
 export class DriversController {
-  constructor(private readonly driversService: DriversService) {}
+  constructor(
+    private readonly driversService: DriversService,
+    private readonly walletsService: WalletsService,
+  ) {}
 
-  @Post('register')
-  create(@Body() body: { fullname: string; phone: string }) {
-    return this.driversService.createDriver(body.fullname, body.phone, 'default123');
+  @Post()
+  async create(@Body() body: any) {
+    return this.driversService.createDriver(body.name, body.phone, body.password);
   }
 
   @Get()
-  all() {
+  async findAll() {
     return this.driversService.findAll();
   }
 
   @Get(':id')
-  byId(@Param('id') id: number) {
+  async findById(@Param('id') id: number) {
     return this.driversService.findById(id);
+  }
+
+  // Consultar saldo wallet
+  @Get(':id/wallet')
+  async getWallet(@Param('id') id: number) {
+    const driver = await this.driversService.findById(id);
+    if (!driver) return { error: 'Chofer no encontrado' };
+    const balance = await this.walletsService.getBalance(driver.wallet.id);
+    return { driverId: id, balance };
   }
 }

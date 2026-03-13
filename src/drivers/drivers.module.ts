@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DriversService } from './drivers.service';
 import { DriversController } from './drivers.controller';
 import { Driver } from './driver.entity';
-import { Wallet } from '../wallet/wallet.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { WalletsModule } from '../wallet/wallets.module'; // ✅ Importar WalletsModule
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Driver, Wallet])],
+  imports: [
+    TypeOrmModule.forFeature([Driver]),
+    WalletsModule, // ✅ WalletsService y repositorios ahora disponibles
+  ],
   providers: [DriversService],
   controllers: [DriversController],
   exports: [DriversService],

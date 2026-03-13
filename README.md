@@ -1,98 +1,165 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+🛺 Avenzo Backend
+<p align="center"> <img src="https://your-logo-url.com/logo.png" alt="Avenzo Logo" width="120"> </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend del sistema de transporte Avenzo, inspirado en Uber, enfocado en viajes premium en La Habana, Cuba.
+Soporta clientes, choferes, administración total, wallet ficticia, penalizaciones, recompensas, zonas calientes y notificaciones push.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+📦 Requisitos
 
-## Description
+Node.js ≥18
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+npm ≥9
 
-## Project setup
+PostgreSQL (Supabase u otro)
 
-```bash
-$ npm install
-```
+Firebase (para notificaciones push en APKs)
 
-## Compile and run the project
+⚡ Instalación
+git clone <repo-url>
+cd taxi-backend
+npm install
+⚙️ Variables de entorno
 
-```bash
-# development
-$ npm run start
+Copia .env.example a .env y completa tus credenciales:
 
-# watch mode
-$ npm run start:dev
+cp .env.example .env
 
-# production mode
-$ npm run start:prod
-```
+Ejemplo (.env.example):
 
-## Run tests
+MAX_DRIVER_MATCH=5
+DRIVER_REQUEST_TIMEOUT=15000
+WAIT_TIME_FREE_MINUTES=2
+WAIT_PRICE_PER_MIN=0.05
+CANCEL_PENALTY=0.5
+ENABLE_DRIVER_RATING=true
+ARRIVAL_RADIUS_METERS=50
+GPS_TOLERANCE_METERS=80
+REFERRAL_REWARD=1
+CITY_RADIUS_KM=40
+HAVANA_LAT=23.11359
+HAVANA_LNG=-82.36659
 
-```bash
-# unit tests
-$ npm run test
+DATABASE_URL=postgresql://postgres:<tu-password>@aws-0-us-west-2.pooler.supabase.com:5432/postgres
 
-# e2e tests
-$ npm run test:e2e
+APP_PORT=3000
 
-# test coverage
-$ npm run test:cov
-```
+⚠️ Nunca subas tu .env real al repositorio.
 
-## Deployment
+🚀 Scripts
+# Desarrollo
+npm run start
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+# Modo desarrollo con watch
+npm run start:dev
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+# Producción
+npm run start:prod
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+# Compilación
+npm run build
+🗂 Estructura principal
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+src/users → Clientes y su wallet
 
-## Resources
+src/drivers → Choferes y su wallet
 
-Check out a few resources that may come in handy when working with NestJS:
+src/rides → Solicitud y control de viajes
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+src/wallet → Wallets ficticias y transacciones
 
-## Support
+src/admin → Endpoints de administración
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+src/matching → Hot Zones y priorización de choferes
 
-## Stay in touch
+src/notifications → Registro de tokens y envío de notificaciones push
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+💡 Funcionalidades
+Clientes
 
-## License
+Solicitar viajes
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Pagar con wallet ficticia o en efectivo
+
+Penalización por cancelación
+
+Recompensas diarias o manuales por admin
+
+Choferes
+
+Recibir viajes solo si wallet ≥ 0
+
+Descuento automático del % de la plataforma
+
+Penalización por cancelación
+
+Recompensas y bonus
+
+Hot Zones: notificaciones push de alta demanda
+
+Admin
+
+Recargar wallet de clientes o choferes
+
+Aplicar recompensas manuales
+
+Limpiar tablas
+
+Enviar notificaciones personalizadas a usuarios, choferes o clientes
+
+Control total de todas las entidades (rides, wallets, users, drivers, vehicles, rewards)
+
+🔥 Hot Zones
+
+Calcula demanda por zona geográfica (lat/lng aproximada)
+
+Priorización de choferes según rating y demanda
+
+Notifica automáticamente a los 5 choferes más cercanos y con wallet ≥ 0
+
+Incrementa la eficiencia de asignación de viajes
+
+🔔 Notificaciones Push
+
+Preparadas para Firebase (Android/iOS)
+
+Permite enviar mensajes individuales o masivos
+
+Admin puede enviar títulos y mensajes personalizados a cualquier grupo de usuarios
+
+💳 Wallet Ficticia
+
+Admin recarga saldo; clientes y choferes usan para solicitar o recibir viajes
+
+Pago en efectivo: admin cobra directamente, wallet se actualiza con comisión automáticamente
+
+Penalizaciones y bonus automáticos
+
+🧪 Pruebas
+
+Unitarias: npm run test
+
+E2E: npm run test:e2e
+
+Cobertura: npm run test:cov
+
+📦 Deploy
+
+Preparado para producción con APP_PORT y DATABASE_URL
+
+Synchronize en TypeORM desactivado (synchronize: false)
+
+Preparado para ser subido a GitHub o desplegado en un VPS/Cloud
+
+🔗 Firebase y APKs
+
+Crear APKs de Cliente, Chofer y Admin.
+
+Descargar google-services.json o GoogleService-Info.plist para cada APK.
+
+Colocar los archivos en src/firebase/ y registrar tokens de dispositivo desde las apps.
+
+Las notificaciones push se enviarán usando NotificationService.
+
+📝 License
+
+MIT License – Libre de usar, modificar y distribuir.

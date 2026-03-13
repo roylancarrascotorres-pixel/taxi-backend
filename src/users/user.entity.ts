@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
+// src/users/user.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Wallet } from '../wallet/wallet.entity';
-
-export type UserRole = 'client' | 'driver' | 'admin';
 
 @Entity()
 export class User {
@@ -9,7 +8,7 @@ export class User {
   id: number;
 
   @Column()
-  fullName: string;
+  name: string;
 
   @Column()
   phone: string;
@@ -17,9 +16,13 @@ export class User {
   @Column()
   password: string;
 
-  @OneToOne(() => Wallet, wallet => wallet.user)
-  wallet: Wallet;
+  @Column({ nullable: true })
+  fcmToken: string;
 
-  @Column({ type: 'enum', enum: ['client', 'driver', 'admin'], default: 'client' })
-  role: UserRole;
+  @Column({ type: 'enum', enum: ['driver', 'client'], default: 'client' })
+  role: 'driver' | 'client';
+
+  @OneToOne(() => Wallet, wallet => wallet.user, { cascade: true })
+  @JoinColumn()
+  wallet: Wallet;
 }

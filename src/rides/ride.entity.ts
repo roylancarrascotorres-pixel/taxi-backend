@@ -1,3 +1,4 @@
+// src/rides/ride.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
@@ -12,7 +13,7 @@ export class Ride {
   @ManyToOne(() => User)
   client: User;
 
-  @ManyToOne(() => Driver, { nullable: true })
+  @ManyToOne(() => Driver)
   driver: Driver;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })

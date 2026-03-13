@@ -1,46 +1,35 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-// Módulos
 import { UsersModule } from './users/users.module';
 import { DriversModule } from './drivers/drivers.module';
 import { RidesModule } from './rides/rides.module';
-import { WalletsModule } from './wallet/wallets.module';
-import { RewardsModule } from './rewards/rewards.module';
 import { AdminModule } from './admin/admin.module';
-import { VehiclesModule } from './vehicles/vehicles.module';
-
-// Entidades
-import { User } from './users/user.entity';
-import { Driver } from './drivers/driver.entity';
-import { Ride } from './rides/ride.entity';
-import { Wallet } from './wallet/wallet.entity';
-import { DailyReward } from './rewards/daily-reward.entity';
-import { Vehicle } from './vehicles/vehicle.entity';
+import { HotZonesService } from './matching/hotzones.service';
+import { DriverMatchingService } from './matching/driver-matching.service';
+import { FirebaseModule } from './firebase/firebase.module';
+import { NotificationModule } from './notifications/notifications.module';
+import { WalletsModule } from './wallet/wallets.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-      ssl: { rejectUnauthorized: false }, // <--- Esto permite conectarse a Supabase desde Render
-      entities: [User, Driver, Ride, Wallet, DailyReward, Vehicle],
-      synchronize: false,
-      logging: true,
+      url: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }, // ✅ obligatorio para Supabase
+      autoLoadEntities: true,
+      synchronize: false, // poner true solo si quieres sincronizar esquemas en dev
     }),
-    TypeOrmModule.forFeature([User, Driver, Ride, Wallet, DailyReward, Vehicle]),
     UsersModule,
     DriversModule,
     RidesModule,
-    WalletsModule,
-    RewardsModule,
     AdminModule,
-    VehiclesModule,
+    FirebaseModule,
+    NotificationModule,
+    WalletsModule,
   ],
+  providers: [HotZonesService, DriverMatchingService],
 })
 export class AppModule {}

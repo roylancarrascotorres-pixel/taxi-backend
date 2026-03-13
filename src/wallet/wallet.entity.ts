@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
+// src/wallet/wallet.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
 
