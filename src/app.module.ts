@@ -1,27 +1,40 @@
-// src/app.module.ts
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
-import { DriversModule } from './drivers/drivers.module';
-import { RidesModule } from './rides/rides.module';
-import { AdminModule } from './admin/admin.module';
-import { HotZonesService } from './matching/hotzones.service';
-import { DriverMatchingService } from './matching/driver-matching.service';
-import { FirebaseModule } from './firebase/firebase.module';
-import { NotificationModule } from './notifications/notifications.module';
-import { WalletsModule } from './wallet/wallets.module';
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm'
+
+import { UsersModule } from './users/users.module'
+import { DriversModule } from './drivers/drivers.module'
+import { RidesModule } from './rides/rides.module'
+import { AdminModule } from './admin/admin.module'
+import { FirebaseModule } from './firebase/firebase.module'
+import { NotificationModule } from './notifications/notifications.module'
+import { WalletsModule } from './wallet/wallets.module'
+
+import { HotZonesService } from './matching/hotzones.service'
+import { DriverMatchingService } from './matching/driver-matching.service'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }, // ✅ obligatorio para Supabase
+
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432'),
+
+      username: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      database: process.env.DB_NAME,
+
+      ssl: {
+        rejectUnauthorized: false,
+      },
+
       autoLoadEntities: true,
-      synchronize: false, // poner true solo si quieres sincronizar esquemas en dev
+      synchronize: false,
     }),
+
     UsersModule,
     DriversModule,
     RidesModule,
