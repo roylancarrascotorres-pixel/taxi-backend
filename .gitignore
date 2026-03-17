@@ -1,44 +1,60 @@
+# ===============================
 # Build / compiled output
+# ===============================
 /dist
 /node_modules
 /build
 
+# ===============================
 # Logs
+# ===============================
 logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
+# ===============================
 # OS
+# ===============================
 .DS_Store
 
+# ===============================
 # Tests / coverage
+# ===============================
 /coverage
 /.nyc_output
 
-# IDEs
+# ===============================
+# IDEs and editors
+# ===============================
 /.idea
 .project
 .classpath
 .c9/
 *.launch
 .settings/
+
 /.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Env files
+# ===============================
+# Environment files
+# ===============================
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
 
+# ===============================
 # Temp / runtime
+# ===============================
 .temp
 .tmp
 pids
@@ -46,9 +62,13 @@ pids
 *.seed
 *.pid.lock
 
+# ===============================
 # Diagnostic reports
+# ===============================
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
+# ===============================
 # Firebase JSON (sensitive)
-/src/firebase/*.json      # ignora todos los JSON de Firebase
-!src/firebase/admin-firebase.json   # excepto el de producción (Avenzo)
+# ===============================
+/src/firebase/*.json      # Ignora todos los JSON de Firebase
+!src/firebase/admin-firebase.json   # ✅ Excepto el de producción
