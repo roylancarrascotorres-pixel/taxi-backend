@@ -36,8 +36,8 @@ export class RewardsService {
 
   // Ejemplo de función para recompensas del día
   async getTodaysRewards(driverId: number) {
-    const today = new Date().toISOString().split('T')[0];
-    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // inicio del día como Date
     return await this.rewardRepo.find({
       where: { driver: { id: driverId }, created_at: MoreThan(today) },
     });

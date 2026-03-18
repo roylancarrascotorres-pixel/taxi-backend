@@ -1,4 +1,3 @@
-// src/rides/rides.service.ts
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Ride } from './ride.entity';
@@ -31,7 +30,6 @@ export class RideService {
     vehicleTypeId: number,
     drivers: Driver[],
   ): Promise<Ride> {
-    // Filtrar solo drivers disponibles y con wallet positiva
     const availableDrivers = drivers.filter(
       d => d.wallet.balance >= 0 && d.available && !d.suspended,
     );
@@ -51,7 +49,6 @@ export class RideService {
     const savedRide = await this.rideRepo.save(ride);
 
     await this.assignRideToTopDrivers(savedRide, availableDrivers);
-
     return savedRide;
   }
 
@@ -76,14 +73,14 @@ export class RideService {
         driverPromises.push({ driver: d, promise: p, resolve: resolver, timeout });
       }
 
-      ride['driverPromises'] = driverPromises;
+      ride.driverPromises = driverPromises;
 
       try {
         const acceptedDriver = await Promise.any(driverPromises.map(p => p.promise));
         if (acceptedDriver) {
           ride.driver = acceptedDriver;
           ride.status = 'accepted';
-          acceptedDriver.available = false; // Marcar driver ocupado
+          acceptedDriver.available = false;
           await this.rideRepo.save(ride);
 
           driverPromises.forEach(p => {
@@ -114,29 +111,28 @@ export class RideService {
   }
 
   async acceptRide(rideId: number, driverId: number): Promise<Ride> {
-    // Transacción para evitar race conditions
     return this.rideRepo.manager.transaction(async manager => {
       const ride = await manager.findOne(Ride, {
         where: { id: rideId },
         relations: ['client', 'driver'],
-        lock: { mode: 'pessimistic_write' }, // Bloqueo
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (!ride) throw new Error('Ride not found');
       if (ride.status !== 'requested') throw new Error('Ride already taken');
 
-      const driverPromiseEntry = ride['driverPromises']?.find((p: any) => p.driver.id === driverId);
+      const driverPromiseEntry = ride.driverPromises?.find(p => p.driver.id === driverId);
       if (!driverPromiseEntry) throw new Error('Driver not in current top drivers or timeout expired');
 
       ride.driver = driverPromiseEntry.driver;
       ride.status = 'accepted';
-      ride.driver.available = false; // Marcar ocupado
+      ride.driver.available = false;
 
       await manager.save(ride);
-
       driverPromiseEntry.resolve(driverPromiseEntry.driver);
       clearTimeout(driverPromiseEntry.timeout);
-      ride['driverPromises'].forEach((p: any) => {
+
+      ride.driverPromises.forEach(p => {
         if (p.driver.id !== driverId) {
           p.resolve(null);
           clearTimeout(p.timeout);
@@ -162,7 +158,7 @@ export class RideService {
     const price = 5;
     ride.totalCost = price;
 
-    ride.driver.available = true; // liberar conductor al completar
+    ride.driver.available = true;
 
     if (payWithWallet && ride.client.wallet && ride.driver.wallet) {
       await this.walletsService.applyTransaction(ride.client.wallet.id, -price, WalletTransactionType.RIDE_PAYMENT, ride.id.toString());
@@ -179,7 +175,7 @@ export class RideService {
 
     ride.status = 'cancelled';
     ride.cancelledAt = new Date();
-    ride.driver.available = true; // liberar conductor si se cancela
+    ride.driver.available = true;
 
     if (penalty > 0) {
       if (cancelBy === 'client') {
