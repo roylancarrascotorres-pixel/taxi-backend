@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Wallet } from './wallet.entity';
 import { Driver } from '../drivers/driver.entity';
+import { Wallet } from './wallet.entity';
 
 export enum WalletTransactionType {
   RIDE_PAYMENT = 'ride',
