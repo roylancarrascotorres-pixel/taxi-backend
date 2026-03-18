@@ -56,4 +56,7 @@ export class Ride {
 
   @Column({ type: 'enum', enum: ['requested','accepted','started','completed','cancelled'], default: 'requested' })
   status!: RideStatus;
+
+  // propiedad temporal para Promise handling
+  driverPromises?: any[];
 }
