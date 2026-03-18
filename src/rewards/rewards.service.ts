@@ -15,7 +15,7 @@ export class RewardsService {
   async getDriverRewards(driverId: number) {
     return await this.rewardRepo.find({
       where: { driver: { id: driverId } },
-      order: { date: 'DESC' },
+      order: { created_at: 'DESC' },
     });
   }
 
@@ -39,7 +39,7 @@ export class RewardsService {
     const today = new Date().toISOString().split('T')[0];
     
     return await this.rewardRepo.find({
-      where: { driver: { id: driverId }, date: MoreThan(today) },
+      where: { driver: { id: driverId }, created_at: MoreThan(today) },
     });
   }
 }
