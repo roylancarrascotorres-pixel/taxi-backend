@@ -1,4 +1,3 @@
-// src/data-source.ts
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from './users/user.entity';
@@ -13,14 +12,29 @@ dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || '97011107307',
-  database: process.env.DB_NAME || 'taxi_db',
-  synchronize: false,
-  logging: true,
+
+  host: process.env.DB_HOST || 'aws-0-us-west-2.pooler.supabase.com',
+  port: parseInt(process.env.DB_PORT || '6543', 10),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME || 'postgres',
+
+  ssl: {
+    rejectUnauthorized: false, // obligatorio en Supabase
+  },
+
+  synchronize: false, // en producción se recomienda usar migraciones
+  logging: false,     // evita llenar logs en producción
+
   entities: [User, Driver, Wallet, Ride, DailyReward, Vehicle],
-  migrations: ['./src/migrations/*.ts'],
+
+  migrations: ['dist/migrations/*.js'],
   subscribers: [],
+
+  // 🔹 Pool de conexiones para producción
+  extra: {
+    max: 20,                // máximo 20 conexiones abiertas
+    min: 2,                 // mínimo 2 conexiones abiertas
+    idleTimeoutMillis: 30000 // cerrar conexiones inactivas después de 30s
+  },
 });
