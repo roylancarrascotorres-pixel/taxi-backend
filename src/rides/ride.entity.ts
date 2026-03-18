@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
 
@@ -13,7 +13,7 @@ export class Ride {
   client!: User;
 
   @ManyToOne(() => Driver)
-  driver?: Driver;
+  driver!: Driver;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
   originLat!: number;
@@ -54,6 +54,6 @@ export class Ride {
   @Column({ type: 'timestamp', nullable: true })
   startEnd?: Date;
 
-  @Column({ type: 'enum', enum: ['requested', 'accepted', 'started', 'completed', 'cancelled'], default: 'requested' })
+  @Column({ type: 'enum', enum: ['requested','accepted','started','completed','cancelled'], default: 'requested' })
   status!: RideStatus;
 }

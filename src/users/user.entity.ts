@@ -18,7 +18,7 @@ export class User {
   @Column({ nullable: true })
   fcmToken?: string;
 
-  @Column({ type: 'enum', enum: ['driver','client'], default: 'client' })
+  @Column({ type: 'enum', enum: ['driver', 'client'], default: 'client' })
   role!: 'driver' | 'client';
 
   @OneToOne(() => Wallet, wallet => wallet.user, { cascade: true })

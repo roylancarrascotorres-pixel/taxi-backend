@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Wallet } from './wallet.entity';
+import { Driver } from '../drivers/driver.entity';
 
 export enum WalletTransactionType {
   RIDE_PAYMENT = 'ride',
@@ -28,4 +29,4 @@ export class WalletTransaction {
 
   @Column({ type: 'varchar', nullable: true })
   description?: string;
-} !
+}

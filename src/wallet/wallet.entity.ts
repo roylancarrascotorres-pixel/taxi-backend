@@ -11,8 +11,8 @@ export class Wallet {
   balance!: number;
 
   @OneToOne(() => User, user => user.wallet)
-  user?: User;
+  user!: User;
 
   @OneToOne(() => Driver, driver => driver.wallet)
-  driver?: Driver;
+  driver!: Driver;
 }
