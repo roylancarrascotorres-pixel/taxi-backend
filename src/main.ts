@@ -1,13 +1,20 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log'], // mínimo para producción
+  });
 
-  const port = parseInt(process.env.APP_PORT ?? '3000', 10);
-  await app.listen(port, '0.0.0.0');
+  // Valida automáticamente DTOs en las requests
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
-  console.log(`🚀 Server running on port ${port}`);
+  // Puerto dinámico: Render asigna PORT automáticamente
+  const port = process.env.PORT || 3000;
+
+  await app.listen(port);
+  Logger.log(`🚀 Server running on port ${port}`, 'Bootstrap');
 }
+
 bootstrap();

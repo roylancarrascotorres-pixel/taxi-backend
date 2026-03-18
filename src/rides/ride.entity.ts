@@ -1,4 +1,3 @@
-// src/rides/ride.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
@@ -8,53 +7,53 @@ export type RideStatus = 'requested' | 'accepted' | 'started' | 'completed' | 'c
 @Entity()
 export class Ride {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => User)
-  client: User;
+  client!: User;
 
   @ManyToOne(() => Driver)
-  driver: Driver;
+  driver?: Driver;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
-  originLat: number;
+  originLat!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
-  originLng: number;
+  originLng!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
-  destLat: number;
+  destLat!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
-  destLng: number;
+  destLng!: number;
 
   @Column()
-  vehicleType: string;
+  vehicleType!: string;
 
   @Column({ type: 'float', default: 0 })
-  driverRating: number;
+  driverRating!: number;
 
   @Column({ type: 'float', default: 0 })
-  clientRating: number;
+  clientRating!: number;
 
   @Column({ type: 'float', default: 0 })
-  totalCost: number;
+  totalCost!: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  startedAt: Date;
+  startedAt?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  completedAt: Date;
+  completedAt?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  cancelledAt: Date;
+  cancelledAt?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  waitStart: Date;
+  waitStart?: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  startEnd: Date;
+  startEnd?: Date;
 
   @Column({ type: 'enum', enum: ['requested', 'accepted', 'started', 'completed', 'cancelled'], default: 'requested' })
-  status: RideStatus;
+  status!: RideStatus;
 }

@@ -1,23 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
 import { Driver } from '../drivers/driver.entity';
 
 @Entity()
 export class DailyReward {
   @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  points: number;
+  id!: number;
 
   @ManyToOne(() => Driver)
-  driver: Driver;
+  driver!: Driver;
 
-  @Column()
-  totalRides: number;
+  @Column({ type: 'float', default: 0 })
+  amount!: number;
 
-  @Column({ type: 'date' })
-  date: string;
+  @CreateDateColumn()
+  created_at!: Date;
 
-  @Column({ type: 'float' })
-  amount: number;
+  @Column({ default: 0 })
+  totalRides!: number;
 }

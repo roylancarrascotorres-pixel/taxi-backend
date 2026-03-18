@@ -1,28 +1,27 @@
-// src/users/user.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Wallet } from '../wallet/wallet.entity';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  phone: string;
+  phone!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
   @Column({ nullable: true })
-  fcmToken: string;
+  fcmToken?: string;
 
   @Column({ type: 'enum', enum: ['driver', 'client'], default: 'client' })
-  role: 'driver' | 'client';
+  role!: 'driver' | 'client';
 
   @OneToOne(() => Wallet, wallet => wallet.user, { cascade: true })
   @JoinColumn()
-  wallet: Wallet;
+  wallet!: Wallet;
 }

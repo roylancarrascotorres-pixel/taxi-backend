@@ -1,4 +1,3 @@
-// src/wallet/wallet.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
@@ -6,14 +5,14 @@ import { Driver } from '../drivers/driver.entity';
 @Entity()
 export class Wallet {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'float', default: 0 })
-  balance: number;
+  balance!: number;
 
   @OneToOne(() => User, user => user.wallet)
-  user: User;
+  user?: User;
 
   @OneToOne(() => Driver, driver => driver.wallet)
-  driver: Driver;
+  driver?: Driver;
 }

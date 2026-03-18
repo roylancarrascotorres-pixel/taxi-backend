@@ -1,4 +1,3 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,9 +6,9 @@ import { UsersModule } from './users/users.module';
 import { DriversModule } from './drivers/drivers.module';
 import { RidesModule } from './rides/rides.module';
 import { AdminModule } from './admin/admin.module';
-import { FirebaseModule } from './firebase/firebase.module';
-import { NotificationModule } from './notifications/notifications.module';
 import { WalletsModule } from './wallet/wallets.module';
+import { FirebaseModule } from './firebase/firebase.module';
+import { NotificationModule } from './notifications/notification.module';
 
 import { HotZonesService } from './matching/hotzones.service';
 import { DriverMatchingService } from './matching/driver-matching.service';
@@ -17,6 +16,7 @@ import { DriverMatchingService } from './matching/driver-matching.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -26,17 +26,16 @@ import { DriverMatchingService } from './matching/driver-matching.service';
       database: process.env.DB_NAME,
       ssl: { rejectUnauthorized: false },
       autoLoadEntities: true,
-      synchronize: false,
-      logging: false,
-      extra: { max: 20, connectionTimeoutMillis: 5000 },
+      synchronize: false, // nunca true en producción
     }),
+
     UsersModule,
     DriversModule,
     RidesModule,
     AdminModule,
+    WalletsModule,
     FirebaseModule,
     NotificationModule,
-    WalletsModule,
   ],
   providers: [HotZonesService, DriverMatchingService],
 })
