@@ -1,5 +1,5 @@
 import { getRepository } from "typeorm";
-import { Ride } from "../rides/ride.model";
+import { Ride } from "../rides/ride.entity";
 
 export async function cleanupOldRides() {
   const repo = getRepository(Ride);
