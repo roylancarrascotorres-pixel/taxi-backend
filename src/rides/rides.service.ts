@@ -22,20 +22,31 @@ export class RideService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async requestRide(clientId:number, pickupLat:number, pickupLng:number,
-    dropLat:number, dropLng:number, vehicleTypeId:number, drivers:Driver[]
+  async requestRide(
+    clientId: number,
+    pickupLat: number,
+    pickupLng: number,
+    dropLat: number,
+    dropLng: number,
+    vehicleTypeId: number,
+    drivers: Driver[],
   ): Promise<Ride> {
-
-    const availableDrivers = drivers.filter(d => d.wallet.balance >= 0 && d.available && !d.suspended);
+    // Filtrar solo drivers disponibles y con wallet positiva
+    const availableDrivers = drivers.filter(
+      d => d.wallet.balance >= 0 && d.available && !d.suspended,
+    );
     if (availableDrivers.length === 0) throw new Error('No drivers available');
 
     const ride = this.rideRepo.create({
       client: { id: clientId } as any,
-      originLat: pickupLat, originLng: pickupLng,
-      destLat: dropLat, destLng: dropLng,
+      originLat: pickupLat,
+      originLng: pickupLng,
+      destLat: dropLat,
+      destLng: dropLng,
       vehicleType: vehicleTypeId.toString(),
-      status: 'requested'
+      status: 'requested',
     });
+
     this.hotZonesService.registerRide(ride);
     const savedRide = await this.rideRepo.save(ride);
 
@@ -44,43 +55,48 @@ export class RideService {
     return savedRide;
   }
 
-  private async assignRideToTopDrivers(ride:Ride, drivers:Driver[]): Promise<void> {
+  private async assignRideToTopDrivers(ride: Ride, drivers: Driver[]): Promise<void> {
     const remainingDrivers = [...drivers];
+
     while (remainingDrivers.length > 0 && !ride.driver) {
       const topDrivers = this.hotZonesService.prioritizeDrivers(remainingDrivers, ride);
       if (topDrivers.length === 0) break;
 
-      const driverPromises: { driver: Driver, promise: Promise<Driver|null>, resolve:(v:Driver|null)=>void, timeout:NodeJS.Timeout }[] = [];
+      const driverPromises: { driver: Driver; promise: Promise<Driver | null>; resolve: (v: Driver | null) => void; timeout: NodeJS.Timeout }[] = [];
 
-      for(const d of topDrivers){
-        let resolver!: (v:Driver|null)=>void;
-        const p = new Promise<Driver|null>(resolve => resolver = resolve);
-        const timeout = setTimeout(()=>resolver(null), 15000);
+      for (const d of topDrivers) {
+        let resolver!: (v: Driver | null) => void;
+        const p = new Promise<Driver | null>(resolve => (resolver = resolve));
+        const timeout = setTimeout(() => resolver(null), 15000);
 
-        this.notificationService.sendToUser(d.id,'Viaje disponible cerca de ti','Hay un cliente solicitando viaje en tu zona.')
-          .catch(err=>console.error('Error notificando driver',d.id,err));
+        this.notificationService
+          .sendToUser(d.id, 'Viaje disponible cerca de ti', 'Hay un cliente solicitando viaje en tu zona.')
+          .catch(err => console.error('Error notificando driver', d.id, err));
 
-        driverPromises.push({ driver:d, promise:p, resolve:resolver, timeout });
+        driverPromises.push({ driver: d, promise: p, resolve: resolver, timeout });
       }
 
       ride['driverPromises'] = driverPromises;
 
       try {
-        const acceptedDriver = await Promise.any(driverPromises.map(p=>p.promise));
-        if(acceptedDriver){
+        const acceptedDriver = await Promise.any(driverPromises.map(p => p.promise));
+        if (acceptedDriver) {
           ride.driver = acceptedDriver;
-          ride.status='accepted';
+          ride.status = 'accepted';
+          acceptedDriver.available = false; // Marcar driver ocupado
           await this.rideRepo.save(ride);
 
-          driverPromises.forEach(p=>{
-            if(p.driver.id!==acceptedDriver.id){ p.resolve(null); clearTimeout(p.timeout); } 
-            else clearTimeout(p.timeout);
+          driverPromises.forEach(p => {
+            if (p.driver.id !== acceptedDriver.id) {
+              p.resolve(null);
+              clearTimeout(p.timeout);
+            } else clearTimeout(p.timeout);
           });
 
           await this.notificationService.sendToUser(
             ride.client.id,
             'Chofer asignado',
-            `Tu chofer ${acceptedDriver.name} está en camino.`
+            `Tu chofer ${acceptedDriver.name} está en camino.`,
           );
           break;
         }
@@ -88,86 +104,90 @@ export class RideService {
         console.log('Ningún driver de esta tanda aceptó, reasignando...');
       }
 
-      for(const d of topDrivers){
-        const index = remainingDrivers.findIndex(r=>r.id===d.id);
-        if(index!==-1) remainingDrivers.splice(index,1);
+      for (const d of topDrivers) {
+        const index = remainingDrivers.findIndex(r => r.id === d.id);
+        if (index !== -1) remainingDrivers.splice(index, 1);
       }
     }
 
-    if(!ride.driver){
-      console.log('Ningún driver aceptó el viaje después de reasignaciones');
-    }
+    if (!ride.driver) console.log('Ningún driver aceptó el viaje después de reasignaciones');
   }
 
-  async acceptRide(rideId:number, driverId:number): Promise<Ride>{
-    const ride = await this.rideRepo.findOne({ where:{ id:rideId }, relations:['client','driver'] });
-    if(!ride) throw new Error('Ride not found');
-    if(ride.driver) throw new Error('Ride already accepted');
+  async acceptRide(rideId: number, driverId: number): Promise<Ride> {
+    // Transacción para evitar race conditions
+    return this.rideRepo.manager.transaction(async manager => {
+      const ride = await manager.findOne(Ride, {
+        where: { id: rideId },
+        relations: ['client', 'driver'],
+        lock: { mode: 'pessimistic_write' }, // Bloqueo
+      });
 
-    const driverPromiseEntry = ride['driverPromises']?.find((p:any)=>p.driver.id===driverId);
-    if(!driverPromiseEntry) throw new Error('Driver not in current top drivers or timeout expired');
+      if (!ride) throw new Error('Ride not found');
+      if (ride.status !== 'requested') throw new Error('Ride already taken');
 
-    ride.driver = driverPromiseEntry.driver;
-    ride.status='accepted';
-    await this.rideRepo.save(ride);
+      const driverPromiseEntry = ride['driverPromises']?.find((p: any) => p.driver.id === driverId);
+      if (!driverPromiseEntry) throw new Error('Driver not in current top drivers or timeout expired');
 
-    driverPromiseEntry.resolve(driverPromiseEntry.driver);
-    clearTimeout(driverPromiseEntry.timeout);
+      ride.driver = driverPromiseEntry.driver;
+      ride.status = 'accepted';
+      ride.driver.available = false; // Marcar ocupado
 
-    ride['driverPromises'].forEach((p:any)=>{
-      if(p.driver.id!==driverId){ p.resolve(null); clearTimeout(p.timeout); }
+      await manager.save(ride);
+
+      driverPromiseEntry.resolve(driverPromiseEntry.driver);
+      clearTimeout(driverPromiseEntry.timeout);
+      ride['driverPromises'].forEach((p: any) => {
+        if (p.driver.id !== driverId) {
+          p.resolve(null);
+          clearTimeout(p.timeout);
+        }
+      });
+
+      await this.notificationService.sendToUser(
+        ride.client.id,
+        'Chofer asignado',
+        `Tu chofer ${ride.driver.name} está en camino.`,
+      );
+
+      return ride;
     });
-
-    await this.notificationService.sendToUser(
-      ride.client.id,
-      'Chofer asignado',
-      `Tu chofer ${ride.driver.name} está en camino.`
-    );
-
-    return ride;
   }
 
-  // Métodos completos: completeTrip y cancelRide
-  async completeTrip(rideId:number, payWithWallet=false, platformPercent=10): Promise<Ride|null>{
-    const ride = await this.rideRepo.findOne({ where:{id:rideId}, relations:['client','driver'] });
-    if(!ride) return null;
-    ride.status='completed';
-    ride.completedAt=new Date();
-    const price=5;
-    ride.totalCost=price;
+  async completeTrip(rideId: number, payWithWallet = false, platformPercent = 10): Promise<Ride | null> {
+    const ride = await this.rideRepo.findOne({ where: { id: rideId }, relations: ['client', 'driver'] });
+    if (!ride) return null;
 
-    if(payWithWallet && ride.client.wallet && ride.driver.wallet){
-      await this.walletsService.applyTransaction(
-        ride.client.wallet.id,
-        -price,
-        WalletTransactionType.RIDE_PAYMENT,
-        ride.id.toString()
-      );
-      const netDriver = price*(1-platformPercent/100);
-      await this.walletsService.applyTransaction(
-        ride.driver.wallet.id,
-        netDriver,
-        WalletTransactionType.DRIVER_EARNING,
-        ride.id.toString()
-      );
+    ride.status = 'completed';
+    ride.completedAt = new Date();
+    const price = 5;
+    ride.totalCost = price;
+
+    ride.driver.available = true; // liberar conductor al completar
+
+    if (payWithWallet && ride.client.wallet && ride.driver.wallet) {
+      await this.walletsService.applyTransaction(ride.client.wallet.id, -price, WalletTransactionType.RIDE_PAYMENT, ride.id.toString());
+      const netDriver = price * (1 - platformPercent / 100);
+      await this.walletsService.applyTransaction(ride.driver.wallet.id, netDriver, WalletTransactionType.DRIVER_EARNING, ride.id.toString());
     }
 
     return this.rideRepo.save(ride);
   }
 
-  async cancelRide(rideId:number, cancelBy:'client'|'driver', penalty=0): Promise<Ride|null>{
-    const ride = await this.rideRepo.findOne({ where:{id:rideId}, relations:['client','driver'] });
-    if(!ride) return null;
-    ride.status='cancelled';
-    ride.cancelledAt=new Date();
+  async cancelRide(rideId: number, cancelBy: 'client' | 'driver', penalty = 0): Promise<Ride | null> {
+    const ride = await this.rideRepo.findOne({ where: { id: rideId }, relations: ['client', 'driver'] });
+    if (!ride) return null;
 
-    if(penalty>0){
-      if(cancelBy==='client'){
-        await this.walletsService.applyTransaction(ride.client.wallet.id,-penalty,WalletTransactionType.PENALTY,ride.id.toString());
-        await this.walletsService.applyTransaction(ride.driver.wallet.id,penalty,WalletTransactionType.BONUS,ride.id.toString());
+    ride.status = 'cancelled';
+    ride.cancelledAt = new Date();
+    ride.driver.available = true; // liberar conductor si se cancela
+
+    if (penalty > 0) {
+      if (cancelBy === 'client') {
+        await this.walletsService.applyTransaction(ride.client.wallet.id, -penalty, WalletTransactionType.PENALTY, ride.id.toString());
+        await this.walletsService.applyTransaction(ride.driver.wallet.id, penalty, WalletTransactionType.BONUS, ride.id.toString());
       } else {
-        await this.walletsService.applyTransaction(ride.driver.wallet.id,-penalty,WalletTransactionType.PENALTY,ride.id.toString());
-        await this.walletsService.applyTransaction(ride.client.wallet.id,penalty,WalletTransactionType.BONUS,ride.id.toString());
+        await this.walletsService.applyTransaction(ride.driver.wallet.id, -penalty, WalletTransactionType.PENALTY, ride.id.toString());
+        await this.walletsService.applyTransaction(ride.client.wallet.id, penalty, WalletTransactionType.BONUS, ride.id.toString());
       }
     }
 

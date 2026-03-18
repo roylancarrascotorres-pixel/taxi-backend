@@ -10,19 +10,17 @@ export class DriversService {
   constructor(
     @InjectRepository(Driver)
     private readonly driverRepo: Repository<Driver>,
-
-    private readonly walletsService: WalletsService, // ✅ inyectado desde WalletsModule
+    private readonly walletsService: WalletsService,
   ) {}
 
   async createDriver(name: string, phone: string, password: string): Promise<Driver> {
-    // Crear wallet usando WalletsService
     const wallet = await this.walletsService.createWallet();
 
     const driver = this.driverRepo.create({
       name,
       phone,
       password,
-      available: true,
+      available: true, // disponible al crear
       suspended: false,
       rating: 5,
       cancelationsToday: 0,
