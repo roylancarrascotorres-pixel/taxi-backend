@@ -14,7 +14,7 @@ export const AppDataSource = new DataSource({
   type: 'postgres',
 
   host: process.env.DB_HOST || 'aws-0-us-west-2.pooler.supabase.com',
-  port: parseInt(process.env.DB_PORT || '6543', 10),
+  port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME || 'postgres',
