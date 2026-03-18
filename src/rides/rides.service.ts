@@ -1,3 +1,4 @@
+// src/rides/rides.service.ts
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Ride } from './ride.entity';
@@ -49,6 +50,7 @@ export class RideService {
     const savedRide = await this.rideRepo.save(ride);
 
     await this.assignRideToTopDrivers(savedRide, availableDrivers);
+
     return savedRide;
   }
 
@@ -73,7 +75,7 @@ export class RideService {
         driverPromises.push({ driver: d, promise: p, resolve: resolver, timeout });
       }
 
-      ride.driverPromises = driverPromises;
+      ride.driverPromises = driverPromises; // inicializamos la propiedad
 
       try {
         const acceptedDriver = await Promise.any(driverPromises.map(p => p.promise));
@@ -129,10 +131,10 @@ export class RideService {
       ride.driver.available = false;
 
       await manager.save(ride);
+
       driverPromiseEntry.resolve(driverPromiseEntry.driver);
       clearTimeout(driverPromiseEntry.timeout);
-
-      ride.driverPromises.forEach(p => {
+      ride.driverPromises?.forEach(p => {
         if (p.driver.id !== driverId) {
           p.resolve(null);
           clearTimeout(p.timeout);
@@ -177,7 +179,7 @@ export class RideService {
     ride.cancelledAt = new Date();
     ride.driver.available = true;
 
-    if (penalty > 0) {
+    if (penalty > 0 && ride.client.wallet && ride.driver.wallet) {
       if (cancelBy === 'client') {
         await this.walletsService.applyTransaction(ride.client.wallet.id, -penalty, WalletTransactionType.PENALTY, ride.id.toString());
         await this.walletsService.applyTransaction(ride.driver.wallet.id, penalty, WalletTransactionType.BONUS, ride.id.toString());
