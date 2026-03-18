@@ -2,19 +2,19 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } f
 import { Driver } from '../drivers/driver.entity';
 
 @Entity()
-export class DailyReward {
+export class DriverRewardLog {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Driver)
-  driver: Driver;
+  driver!: Driver;
 
-  @Column({ type: 'float', default: 0 })
-  amount: number;
+  @Column({ type: 'float' })
+  amount!: number;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @Column({ default: 0 })
-  totalRides: number;
+  totalRides!: number;
 }

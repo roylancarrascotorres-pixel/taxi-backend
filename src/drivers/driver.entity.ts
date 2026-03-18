@@ -27,7 +27,8 @@ export class Driver {
   @Column({ default: 0 })
   cancelationsToday!: number;
 
-  score?: number;
+  @Column({ type: 'float', default: 0 })
+  score!: number;
 
   @OneToOne(() => Wallet, wallet => wallet.driver, { cascade: true })
   @JoinColumn()

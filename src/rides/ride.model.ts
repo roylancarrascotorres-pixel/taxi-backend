@@ -1,5 +1,3 @@
-import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
-
 export enum RideStatus {
   REQUESTED = 'REQUESTED',
   DRIVER_ASSIGNED = 'DRIVER_ASSIGNED',
@@ -9,38 +7,16 @@ export enum RideStatus {
   CANCELLED = 'CANCELLED'
 }
 
-@Entity()
-export class Ride {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  clientId: number;
-
-  @Column()
-  driverId: number;
-
-  @Column()
-  vehicleTypeId: number;
-
-  @Column({ type: 'float' })
-  pickupLat: number;
-
-  @Column({ type: 'float' })
-  pickupLng: number;
-
-  @Column({ type: 'float' })
-  dropLat: number;
-
-  @Column({ type: 'float' })
-  dropLng: number;
-
-  @Column({ type: 'float' })
-  price: number;
-
-  @Column({ type: 'enum', enum: RideStatus, default: RideStatus.REQUESTED })
-  status: RideStatus;
-
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+export class RideModel {
+  id!: number;
+  clientId!: number;
+  driverId!: number;
+  vehicleTypeId!: number;
+  pickupLat!: number;
+  pickupLng!: number;
+  dropLat!: number;
+  dropLng!: number;
+  price!: number;
+  status!: RideStatus;
+  createdAt!: Date;
 }
