@@ -1,4 +1,3 @@
-// src/wallet/wallets.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -20,14 +19,14 @@ export class WalletsService {
     return this.walletsRepository.save(wallet);
   }
 
-  async getBalance(walletId: number): Promise<number> {
-    const wallet = await this.walletsRepository.findOne({ where: { id: walletId } });
+  async getBalance(walletId: string): Promise<number> {
+    const wallet = await this.walletsRepository.findOne({ where: { id: Number(walletId) } });
     if (!wallet) throw new Error('Wallet not found');
     return wallet.balance;
   }
 
-  async rechargeWallet(walletId: number, amount: number): Promise<Wallet> {
-    const wallet = await this.walletsRepository.findOne({ where: { id: walletId } });
+  async rechargeWallet(walletId: string, amount: number): Promise<Wallet> {
+    const wallet = await this.walletsRepository.findOne({ where: { id: Number(walletId) } });
     if (!wallet) throw new Error('Wallet not found');
     wallet.balance += amount;
     await this.walletsRepository.save(wallet);
@@ -43,8 +42,8 @@ export class WalletsService {
     return wallet;
   }
 
-  async applyTransaction(walletId: number, amount: number, type: WalletTransactionType, description?: string): Promise<Wallet> {
-    const wallet = await this.walletsRepository.findOne({ where: { id: walletId } });
+  async applyTransaction(walletId: string, amount: number, type: WalletTransactionType, description?: string): Promise<Wallet> {
+    const wallet = await this.walletsRepository.findOne({ where: { id: Number(walletId) } });
     if (!wallet) throw new Error('Wallet not found');
 
     if (type === WalletTransactionType.RIDE_PAYMENT || type === WalletTransactionType.PENALTY) {

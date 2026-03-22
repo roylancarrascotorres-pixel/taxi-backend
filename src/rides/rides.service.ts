@@ -37,7 +37,7 @@ export class RideService {
     if (availableDrivers.length === 0) throw new Error('No drivers available');
 
     const ride = this.rideRepo.create({
-      client: { id: clientId } as any,
+      client: { id: clientId.toString() } as any,
       originLat: pickupLat,
       originLng: pickupLng,
       destLat: dropLat,
@@ -69,7 +69,7 @@ export class RideService {
         const timeout = setTimeout(() => resolver(null), 15000);
 
         this.notificationService
-          .sendToUser(d.id, 'Viaje disponible cerca de ti', 'Hay un cliente solicitando viaje en tu zona.')
+          .sendToUser(d.id.toString(), 'Viaje disponible cerca de ti', 'Hay un cliente solicitando viaje en tu zona.')
           .catch(err => console.error('Error notificando driver', d.id, err));
 
         driverPromises.push({ driver: d, promise: p, resolve: resolver, timeout });
@@ -93,7 +93,7 @@ export class RideService {
           });
 
           await this.notificationService.sendToUser(
-            ride.client.id,
+            ride.client.id.toString(),
             'Chofer asignado',
             `Tu chofer ${acceptedDriver.name} está en camino.`,
           );
@@ -142,7 +142,7 @@ export class RideService {
       });
 
       await this.notificationService.sendToUser(
-        ride.client.id,
+        ride.client.id.toString(),
         'Chofer asignado',
         `Tu chofer ${ride.driver.name} está en camino.`,
       );

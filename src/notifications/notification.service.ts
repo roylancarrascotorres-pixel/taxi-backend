@@ -1,50 +1,76 @@
+// src/notifications/notification.service.ts
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
-import * as admin from 'firebase-admin';
+import { MessagingPayload, MulticastMessage } from 'firebase-admin/lib/messaging';
 
 @Injectable()
 export class NotificationService {
-  private userTokens: Map<string, string> = new Map(); // Ejemplo simple para token
-
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  // Registrar token de un usuario
   async registerToken(userId: string, token: string) {
-    this.userTokens.set(userId, token);
-    console.log(`Token registrado para usuario ${userId}`);
+    // Aquí deberías guardar el token en la DB relacionado al userId
+    console.log(`Registrando token para userId ${userId}: ${token}`);
   }
 
-  // Enviar notificación a un usuario
-  async sendToUser(userId: string, title: string, body: string, data?: Record<string, string>) {
-    const token = this.userTokens.get(userId);
-    if (!token) return console.warn('Usuario sin token', userId);
+  async sendToUser(userId: string, title: string, message: string) {
+    // Obtener tokens del usuario desde DB
+    const tokens = await this.getUserTokens(userId);
+    if (!tokens || tokens.length === 0) return;
 
-    const message: admin.messaging.Message = { token, notification: { title, body }, data };
-    return await this.firebaseService.getMessaging().send(message);
+    const payload: MulticastMessage = {
+      tokens,
+      notification: { title, body: message },
+    };
+
+    await this.sendMulticast(payload);
   }
 
-  // Enviar notificación a todos los conductores (simulado)
-  async sendToAllDrivers(title: string, body: string) {
-    const tokens = Array.from(this.userTokens.values()); // reemplaza con tus tokens de drivers
-    const message: admin.messaging.MulticastMessage = { tokens, notification: { title, body } };
-    return await this.firebaseService.getMessaging().sendMulticast(message);
+  async sendToAllDrivers(title: string, message: string) {
+    const tokens = await this.getAllDriverTokens();
+    if (!tokens || tokens.length === 0) return;
+
+    const payload: MulticastMessage = {
+      tokens,
+      notification: { title, body: message },
+    };
+
+    await this.sendMulticast(payload);
   }
 
-  // Enviar notificación a todos los clientes (simulado)
-  async sendToAllClients(title: string, body: string) {
-    const tokens = Array.from(this.userTokens.values()); // reemplaza con tus tokens de clientes
-    const message: admin.messaging.MulticastMessage = { tokens, notification: { title, body } };
-    return await this.firebaseService.getMessaging().sendMulticast(message);
+  async sendToAllClients(title: string, message: string) {
+    const tokens = await this.getAllClientTokens();
+    if (!tokens || tokens.length === 0) return;
+
+    const payload: MulticastMessage = {
+      tokens,
+      notification: { title, body: message },
+    };
+
+    await this.sendMulticast(payload);
   }
 
-  // Enviar push genérico (puede usarse para cualquier token)
-  async sendPush(token: string, title: string, body: string, data?: Record<string, string>) {
-    const message: admin.messaging.Message = { token, notification: { title, body }, data };
-    return await this.firebaseService.getMessaging().send(message);
+  async sendPush(token: string, title: string, message: string) {
+    const payload: MessagingPayload = {
+      notification: { title, body: message },
+    };
+    await this.firebaseService.getMessaging().send({ token, ...payload });
   }
 
-  // Enviar notificación a múltiples tokens
-  async sendMulticast(message: admin.messaging.MulticastMessage) {
-    return await this.firebaseService.getMessaging().sendMulticast(message);
+  private async sendMulticast(payload: MulticastMessage) {
+    const messaging = this.firebaseService.getMessaging();
+    await messaging.sendMulticast(payload);
+  }
+
+  // Simulaciones de obtención de tokens desde la DB
+  private async getUserTokens(userId: string): Promise<string[]> {
+    return ['token1', 'token2']; // reemplazar con DB real
+  }
+
+  private async getAllDriverTokens(): Promise<string[]> {
+    return ['driverToken1', 'driverToken2'];
+  }
+
+  private async getAllClientTokens(): Promise<string[]> {
+    return ['clientToken1', 'clientToken2'];
   }
 }

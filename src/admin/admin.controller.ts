@@ -1,4 +1,3 @@
-// src/admin/admin.controller.ts
 import { Controller, Post, Body, Param, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -18,20 +17,21 @@ export class AdminController {
 
   @Post('wallet/:walletId/recharge')
   @Roles(Role.ADMIN)
-  async rechargeWallet(@Param('walletId') walletId: number, @Body('amount') amount: number) {
+  async rechargeWallet(@Param('walletId') walletId: string, @Body('amount') amount: number) {
+    // Convertimos walletId a número dentro del servicio si es necesario
     return this.walletsService.rechargeWallet(walletId, amount);
   }
 
   @Get('wallet/:walletId/balance')
   @Roles(Role.ADMIN)
-  async getBalance(@Param('walletId') walletId: number) {
+  async getBalance(@Param('walletId') walletId: string) {
     const balance = await this.walletsService.getBalance(walletId);
     return { walletId, balance };
   }
 
   @Post('wallet/:walletId/reward')
   @Roles(Role.ADMIN)
-  async applyReward(@Param('walletId') walletId: number, @Body('amount') amount: number) {
+  async applyReward(@Param('walletId') walletId: string, @Body('amount') amount: number) {
     return this.walletsService.applyTransaction(
       walletId,
       amount,
@@ -43,7 +43,7 @@ export class AdminController {
   @Post('notify/user')
   @Roles(Role.ADMIN)
   async notifyUser(@Body() body: { userId: number; title: string; message: string }) {
-    await this.notificationService.sendToUser(body.userId, body.title, body.message);
+    await this.notificationService.sendToUser(body.userId.toString(), body.title, body.message);
     return { message: `Notificación enviada al usuario ${body.userId}` };
   }
 
