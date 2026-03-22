@@ -1,26 +1,26 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { getApps, getApp, messaging } from 'firebase-admin/app';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   private firebaseApp: admin.app.App;
 
   onModuleInit() {
-    if (!process.env.FIREBASE_CREDENTIAL_JSON) {
-      throw new Error('FIREBASE_CREDENTIAL_JSON no está definido en las variables de entorno');
+    try {
+      // Si ya hay apps inicializadas, reutiliza
+      this.firebaseApp = getApps().length ? getApp() : admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+      });
+
+      console.log('🔥 Firebase conectado correctamente');
+    } catch (error) {
+      console.error('Error inicializando Firebase', error);
     }
-
-    const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIAL_JSON);
-    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-
-    // Verifica si ya existe un app inicializado
-    this.firebaseApp = admin.apps.length
-      ? admin.app() // reutiliza el app existente
-      : admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-        });
-
-    console.log('🔥 Firebase conectado correctamente');
   }
 
   getMessaging(): admin.messaging.Messaging {
