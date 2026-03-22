@@ -3,23 +3,44 @@ import * as admin from 'firebase-admin';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  private app!: admin.app.App; // Se inicializa en onModuleInit
+  private firebaseApp: admin.app.App;
 
   onModuleInit() {
-    const firebaseCredentialsJson = process.env.FIREBASE_CREDENTIAL_JSON;
-    if (!firebaseCredentialsJson) {
-      throw new Error('FIREBASE_CREDENTIAL_JSON no está definida en el .env');
-    }
+    // 🔥 Parsear JSON desde variable de entorno
+    const serviceAccount = JSON.parse(
+      process.env.FIREBASE_CREDENTIAL_JSON as string,
+    );
 
-    const firebaseCredentials = JSON.parse(firebaseCredentialsJson);
+    // 🔥 Arreglar saltos de línea del private_key
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
-    this.app = admin.initializeApp({
-      credential: admin.credential.cert(firebaseCredentials),
+    // 🔥 Inicializar Firebase
+    this.firebaseApp = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+
+    console.log('🔥 Firebase conectado correctamente');
+  }
+
+  // 🔔 Enviar notificación a un token
+  async sendNotification(token: string, title: string, body: string) {
+    return admin.messaging().send({
+      token,
+      notification: {
+        title,
+        body,
+      },
     });
   }
 
-  // Método para obtener Messaging de Firebase
-  getMessaging() {
-    return this.app.messaging();
+  // 🔔 Enviar a múltiples tokens
+  async sendMulticast(tokens: string[], title: string, body: string) {
+    return admin.messaging().sendMulticast({
+      tokens,
+      notification: {
+        title,
+        body,
+      },
+    });
   }
 }
