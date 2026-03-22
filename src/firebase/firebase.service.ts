@@ -3,18 +3,15 @@ import * as admin from 'firebase-admin';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  private firebaseApp: admin.app.App;
+  private firebaseApp!: admin.app.App; // 🔥 FIX 1
 
   onModuleInit() {
-    // 🔥 Parsear JSON desde variable de entorno
     const serviceAccount = JSON.parse(
       process.env.FIREBASE_CREDENTIAL_JSON as string,
     );
 
-    // 🔥 Arreglar saltos de línea del private_key
     serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
-    // 🔥 Inicializar Firebase
     this.firebaseApp = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -22,7 +19,12 @@ export class FirebaseService implements OnModuleInit {
     console.log('🔥 Firebase conectado correctamente');
   }
 
-  // 🔔 Enviar notificación a un token
+  // 🔥 NUEVO: obtener messaging (FIX 3)
+  getMessaging() {
+    return admin.messaging();
+  }
+
+  // 🔔 Enviar a un solo token
   async sendNotification(token: string, title: string, body: string) {
     return admin.messaging().send({
       token,
@@ -33,9 +35,9 @@ export class FirebaseService implements OnModuleInit {
     });
   }
 
-  // 🔔 Enviar a múltiples tokens
+  // 🔔 Enviar a múltiples tokens (FIX 2)
   async sendMulticast(tokens: string[], title: string, body: string) {
-    return admin.messaging().sendMulticast({
+    return admin.messaging().sendEachForMulticast({
       tokens,
       notification: {
         title,
