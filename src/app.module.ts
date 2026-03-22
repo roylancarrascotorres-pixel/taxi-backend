@@ -12,15 +12,27 @@ import { FirebaseService } from './firebase/firebase.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
+    TypeOrmModule.forRoot({
+      type: 'postgres', // obligatorio
+      url: process.env.DATABASE_URL, // Supabase connection
+      autoLoadEntities: true,
+      synchronize: false, // ⚠️ poner false en producción
+      ssl: {
+        rejectUnauthorized: false, // necesario para Render + Supabase
+      },
+    }),
+
     UsersModule,
     DriversModule,
     WalletsModule,
     RidesModule,
     NotificationModule,
-    AdminModule
+    AdminModule,
   ],
-  providers: [FirebaseService]
+  providers: [FirebaseService],
 })
 export class AppModule {}
