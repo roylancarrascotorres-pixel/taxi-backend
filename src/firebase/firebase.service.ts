@@ -3,26 +3,23 @@ import * as admin from 'firebase-admin';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  private app: admin.app.App;
+  private app!: admin.app.App; // Se inicializa en onModuleInit
 
   onModuleInit() {
-    const firebaseCredentialsStr = process.env.FIREBASE_CREDENTIAL_JSON;
-    if (!firebaseCredentialsStr) {
-      throw new Error('FIREBASE_CREDENTIAL_JSON not defined in .env');
+    const firebaseCredentialsJson = process.env.FIREBASE_CREDENTIAL_JSON;
+    if (!firebaseCredentialsJson) {
+      throw new Error('FIREBASE_CREDENTIAL_JSON no está definida en el .env');
     }
 
-    const firebaseCredentials = JSON.parse(firebaseCredentialsStr);
+    const firebaseCredentials = JSON.parse(firebaseCredentialsJson);
 
     this.app = admin.initializeApp({
       credential: admin.credential.cert(firebaseCredentials),
     });
   }
 
-  // Retorna el Messaging de Firebase
-  getMessaging(): admin.messaging.Messaging {
-    if (!this.app) {
-      throw new Error('Firebase not initialized');
-    }
+  // Método para obtener Messaging de Firebase
+  getMessaging() {
     return this.app.messaging();
   }
 }
