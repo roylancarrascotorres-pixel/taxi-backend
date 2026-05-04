@@ -162,4 +162,8 @@ Las notificaciones push se enviarán usando NotificationService.
 
 📝 License
 
-MIT License – Libre de usar, modificar y distribuir.
+Copyright (c) 2026 Roylan Carrasco Torres
+Todos los derechos reservados.
+
+Este software y su código fuente son propietarios.
+Ninguna parte de este software puede ser utilizada, copiada, modificada, fusionada, publicada, distribuida, sublicenciada o vendida sin el permiso explícito del autor.
